@@ -27,6 +27,7 @@ func main() {
 	log.Println("Starting Authentication service")
 
 	conn := connectToDB()
+
 	if conn == nil {
 		log.Panic("Can't connect to Postgres!")
 	}
@@ -45,7 +46,6 @@ func main() {
 	err := srv.ListenAndServe()
 
 	if err != nil {
-
 		log.Panic(err)
 	}
 }

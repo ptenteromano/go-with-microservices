@@ -1,4 +1,7 @@
-.DS_Store
 project/db-data/postgres
-brokerApp
-authApp
+*App
+
+# vs code
+.DS_Store
+.vscode
+*.code-workspace

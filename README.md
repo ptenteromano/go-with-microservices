@@ -7,7 +7,8 @@ I hope to achieve the following from this:
 4. More exposure to docker and makefiles
 
 ## Commands
-To all the services: `make up_build`
+To start all the services: `make up_build`
+To kill all services: `make down`
 The frontend service lives on port 80
 
 Be sure to have docker installed
