@@ -1,12 +1,19 @@
 {
 	"folders": [
 		{
+			"name": "broker-service",
 			"path": "broker-service"
 		},
 		{
+			"name": "front-end",
 			"path": "front-end"
 		},
 		{
+			"name": "authentication-service",
+			"path": "authentication-service"
+		},
+		{
+			"name": "project",
 			"path": "project"
 		}
 	],
