@@ -5,7 +5,18 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/ptenteromano/jsontools"
 )
+
+type jsonResponse struct {
+	Error   bool   `json:"error"`
+	Message string `json:"message"`
+	Port    string `json:"port"`
+	Data    any    `json:"data,omitempty"`
+}
+
+var jtools jsontools.Tools
 
 // Endpoint to auth the user through Postgres
 func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
@@ -15,23 +26,22 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Println("Hitting /authenticate post route")
-
-	err := app.readJSON(w, r, &requestPayload)
+	err := jtools.ReadJSON(w, r, &requestPayload)
 	if err != nil {
-		app.errorJSON(w, err, http.StatusBadRequest)
+		jtools.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 
 	// validate the user against the database
 	user, err := app.Models.User.GetByEmail(requestPayload.Email)
 	if err != nil {
-		app.errorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
+		jtools.ErrorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
 		return
 	}
 
 	valid, err := user.PasswordMatches(requestPayload.Password)
 	if err != nil || !valid {
-		app.errorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
+		jtools.ErrorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
 		return
 	}
 
@@ -41,5 +51,5 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 		Data:    user,
 	}
 
-	app.writeJSON(w, http.StatusAccepted, payload)
+	jtools.WriteJSON(w, http.StatusAccepted, payload)
 }

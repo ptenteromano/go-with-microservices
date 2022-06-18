@@ -6,6 +6,8 @@ import (
 	"errors"
 	"log"
 	"net/http"
+
+	"github.com/ptenteromano/jsontools"
 )
 
 type requestPayload struct {
@@ -18,6 +20,15 @@ type AuthPayload struct {
 	Password string `json:"password"`
 }
 
+type jsonResponse struct {
+	Error   bool   `json:"error"`
+	Message string `json:"message"`
+	Port    string `json:"port"`
+	Data    any    `json:"data,omitempty"`
+}
+
+var jtools jsontools.Tools
+
 func (app *Config) Broker(w http.ResponseWriter, r *http.Request) {
 	payload := jsonResponse{
 		Error:   false,
@@ -25,15 +36,15 @@ func (app *Config) Broker(w http.ResponseWriter, r *http.Request) {
 		Port:    webPort,
 	}
 
-	_ = app.writeJSON(w, http.StatusOK, payload)
+	_ = jtools.WriteJSON(w, http.StatusOK, payload)
 }
 
 func (app *Config) HandleSubmission(w http.ResponseWriter, r *http.Request) {
 	var requestPayload requestPayload
 
-	err := app.readJSON(w, r, &requestPayload)
+	err := jtools.ReadJSON(w, r, &requestPayload)
 	if err != nil {
-		app.errorJSON(w, err)
+		jtools.ErrorJSON(w, err)
 		return
 	}
 
@@ -41,26 +52,27 @@ func (app *Config) HandleSubmission(w http.ResponseWriter, r *http.Request) {
 	case "auth":
 		app.authenticate(w, requestPayload.Auth)
 	default:
-		app.errorJSON(w, errors.New("unknown action"))
+		jtools.ErrorJSON(w, errors.New("unknown action"))
 	}
 
 }
 
+// Point to the Authentication-Service to authenticate
 func (app *Config) authenticate(w http.ResponseWriter, a AuthPayload) {
 	// Create json and send to auth microservice
 	jsonData, _ := json.MarshalIndent(a, "", "\t")
 
-	// call the service
+	// call the Auth Service
 	request, err := http.NewRequest("POST", "http://authentication-service/authenticate", bytes.NewBuffer(jsonData))
 	if err != nil {
-		app.errorJSON(w, err)
+		jtools.ErrorJSON(w, err)
 		return
 	}
 
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		app.errorJSON(w, err)
+		jtools.ErrorJSON(w, err)
 		return
 	}
 
@@ -68,12 +80,12 @@ func (app *Config) authenticate(w http.ResponseWriter, a AuthPayload) {
 
 	// get back correct status code
 	if response.StatusCode == http.StatusUnauthorized {
-		app.errorJSON(w, errors.New("invalid credentials"))
+		jtools.ErrorJSON(w, errors.New("invalid credentials"))
 		return
 	}
 	if response.StatusCode != http.StatusAccepted {
 		log.Println("error: ", response.Status)
-		app.errorJSON(w, errors.New("error calling auth service"))
+		jtools.ErrorJSON(w, errors.New("error calling auth service"))
 		return
 	}
 
@@ -81,11 +93,11 @@ func (app *Config) authenticate(w http.ResponseWriter, a AuthPayload) {
 	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
 
 	if err != nil {
-		app.errorJSON(w, err)
+		jtools.ErrorJSON(w, err)
 		return
 	}
 	if jsonFromService.Error {
-		app.errorJSON(w, errors.New(jsonFromService.Message), http.StatusUnauthorized)
+		jtools.ErrorJSON(w, errors.New(jsonFromService.Message), http.StatusUnauthorized)
 		return
 	}
 
@@ -96,5 +108,5 @@ func (app *Config) authenticate(w http.ResponseWriter, a AuthPayload) {
 		Data:    jsonFromService.Data,
 	}
 
-	app.writeJSON(w, http.StatusAccepted, payload)
+	jtools.WriteJSON(w, http.StatusAccepted, payload)
 }

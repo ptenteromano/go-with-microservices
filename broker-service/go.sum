@@ -2,3 +2,5 @@ github.com/go-chi/chi/v5 v5.0.7 h1:rDTPXLDHGATaeHvVlLcR4Qe0zftYethFucbjVQ1PxU8=
 github.com/go-chi/chi/v5 v5.0.7/go.mod h1:DslCQbL2OYiznFReuXYUmQ2hGd1aDpCnlMNITLSKoi8=
 github.com/go-chi/cors v1.2.1 h1:xEC8UT3Rlp2QuWNEr4Fs/c2EAGVKBwy/1vHx3bppil4=
 github.com/go-chi/cors v1.2.1/go.mod h1:sSbTewc+6wYHBBCW7ytsFSn836hqM7JxpglAy2Vzc58=
+github.com/ptenteromano/jsontools v0.0.0-20220617181716-35b1166c7f88 h1:s6/m2RqrbmRpHuTzVWQ3tIoyHvoa1WIX3NlWMOw3xVs=
+github.com/ptenteromano/jsontools v0.0.0-20220617181716-35b1166c7f88/go.mod h1:BT3yinK7+1diKbwH1hxkcJU/DguPipiu0FdyewT71nE=
