@@ -1,4 +1,4 @@
--- Seed the Database with Users
+-- Seed the Database with Users. Run this query inside a GUI database manager like Beekeeper or Sequel Pro.
 
 --
 -- Name: user_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres

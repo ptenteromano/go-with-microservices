@@ -1,0 +1,4 @@
+github.com/ptenteromano/jsontools v1.1.0 h1:xZdA1/WrrRz9GKtZe4XoaFh1nw9gwtOBGHTfYJLjruQ=
+github.com/ptenteromano/jsontools v1.1.0/go.mod h1:BT3yinK7+1diKbwH1hxkcJU/DguPipiu0FdyewT71nE=
+github.com/rabbitmq/amqp091-go v1.3.4 h1:tXuIslN1nhDqs2t6Jrz3BAoqvt4qIZzxvdbdcxWtHYU=
+github.com/rabbitmq/amqp091-go v1.3.4/go.mod h1:ogQDLSOACsLPsIq0NpbtiifNZi2YOz0VTJ0kHRghqbM=
