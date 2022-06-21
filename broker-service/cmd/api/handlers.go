@@ -10,9 +10,12 @@ import (
 	"github.com/ptenteromano/jsontools"
 )
 
+// Primary json entrypoint. Need an action and a nested json structure
 type requestPayload struct {
 	Action string      `json:"action"`
 	Auth   AuthPayload `json:"auth,omitempty"`
+	Log    LogPayload  `json:"log,omitempty"`
+	Mail   MailPayload `json:"mail,omitempty"`
 }
 
 type AuthPayload struct {
@@ -20,19 +23,24 @@ type AuthPayload struct {
 	Password string `json:"password"`
 }
 
-type jsonResponse struct {
-	Error   bool   `json:"error"`
+type LogPayload struct {
+	Name string `json:"name"`
+	Data string `json:"data"`
+}
+
+type MailPayload struct {
+	From    string `json:"from"`
+	To      string `json:"to"`
+	Subject string `json:"subject"`
 	Message string `json:"message"`
-	Port    string `json:"port"`
-	Data    any    `json:"data,omitempty"`
 }
 
 var jtools jsontools.Tools
 
 func (app *Config) Broker(w http.ResponseWriter, r *http.Request) {
-	payload := jsonResponse{
+	payload := jsontools.JsonResponse{
 		Error:   false,
-		Message: "Hit the broker on port",
+		Message: "Hit the broker!",
 		Port:    webPort,
 	}
 
@@ -51,6 +59,10 @@ func (app *Config) HandleSubmission(w http.ResponseWriter, r *http.Request) {
 	switch requestPayload.Action {
 	case "auth":
 		app.authenticate(w, requestPayload.Auth)
+	case "log":
+		app.logItem(w, requestPayload.Log)
+	case "mail":
+		app.SendMail(w, requestPayload.Mail)
 	default:
 		jtools.ErrorJSON(w, errors.New("unknown action"))
 	}
@@ -72,6 +84,7 @@ func (app *Config) authenticate(w http.ResponseWriter, a AuthPayload) {
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
+		log.Println("error in brokerApp: ", err)
 		jtools.ErrorJSON(w, err)
 		return
 	}
@@ -84,12 +97,11 @@ func (app *Config) authenticate(w http.ResponseWriter, a AuthPayload) {
 		return
 	}
 	if response.StatusCode != http.StatusAccepted {
-		log.Println("error: ", response.Status)
 		jtools.ErrorJSON(w, errors.New("error calling auth service"))
 		return
 	}
 
-	var jsonFromService jsonResponse
+	var jsonFromService jsontools.JsonResponse
 	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
 
 	if err != nil {
@@ -102,10 +114,76 @@ func (app *Config) authenticate(w http.ResponseWriter, a AuthPayload) {
 	}
 
 	// login is valid
-	payload := jsonResponse{
+	payload := jsontools.JsonResponse{
 		Error:   false,
 		Message: "authenticated successfully",
 		Data:    jsonFromService.Data,
+	}
+
+	jtools.WriteJSON(w, http.StatusAccepted, payload)
+}
+
+// Point to the Logger-Service to post a log entry
+func (app *Config) logItem(w http.ResponseWriter, entry LogPayload) {
+	jsonData, _ := json.MarshalIndent(entry, "", "\t")
+
+	request, err := http.NewRequest("POST", "http://logger-service/log", bytes.NewBuffer(jsonData))
+	if err != nil {
+		jtools.ErrorJSON(w, err)
+		return
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		jtools.ErrorJSON(w, err)
+		return
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusAccepted {
+		jtools.ErrorJSON(w, err)
+		return
+	}
+
+	payload := jsontools.JsonResponse{
+		Error:   false,
+		Message: "logged successfully",
+	}
+
+	jtools.WriteJSON(w, http.StatusAccepted, payload)
+}
+
+func (app *Config) SendMail(w http.ResponseWriter, msg MailPayload) {
+	jsonData, _ := json.MarshalIndent(msg, "", "\t")
+
+	// Call the mail service
+	request, err := http.NewRequest("POST", "http://mailer-service/send", bytes.NewBuffer(jsonData))
+	if err != nil {
+		jtools.ErrorJSON(w, err)
+		return
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		jtools.ErrorJSON(w, err)
+		return
+	}
+	defer response.Body.Close()
+
+	log.Println("response from mailer: ", response.StatusCode)
+
+	if response.StatusCode != http.StatusAccepted {
+		jtools.ErrorJSON(w, errors.New("error calling mail service from broker"))
+		return
+	}
+
+	payload := jsontools.JsonResponse{
+		Error:   false,
+		Message: "Message sent to " + msg.To,
 	}
 
 	jtools.WriteJSON(w, http.StatusAccepted, payload)

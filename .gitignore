@@ -1,4 +1,5 @@
 project/db-data/postgres
+project/db-data/mongo
 *App
 
 # vs code
