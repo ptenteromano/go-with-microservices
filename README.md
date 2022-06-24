@@ -14,3 +14,9 @@ The frontend service lives on port 80
 Be sure to have docker installed
 
 https://gobyexample.com/
+
+## Multiple ways to communicate between microservices
+- JSON
+- RabbitMQ (messenger service)
+- RPC
+- gRPC
